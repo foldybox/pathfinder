@@ -11,7 +11,8 @@ CFLAGS = -std=c11 -Wall -Wextra -Werror -Wpedantic
 
 all: $(EXEC_FILE)
 
-$(EXEC_FILE): $(LIB_FILE) build link
+$(EXEC_FILE): build link
+#$(EXEC_FILE): $(LIB_FILE) build link
 
 $(LIB_FILE):
 	@make -C $(LIB_DIR)

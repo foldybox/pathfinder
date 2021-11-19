@@ -2,16 +2,6 @@
 
 #include "libmx.h"
 
-#ifdef __linux__
-
-char *mx_file_to_str(const char *filename) {
-    char *arr = malloc(sizeof(char));
-    arr[0] = filename[0];
-    return arr;
-}
-
-#elif __APPLE__
-
 char *mx_file_to_str(const char *filename) {
     if (filename == NULL) {
         return NULL;
@@ -51,5 +41,3 @@ char *mx_file_to_str(const char *filename) {
 
     return arr;
 }
-
-#endif
