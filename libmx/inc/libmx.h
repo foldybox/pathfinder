@@ -191,6 +191,8 @@ char *mx_strjoin(const char *s1, const char *s2);
 /// \param file - строка
 char *mx_file_to_str(const char *file);
 
+int mx_file_len(const char *file);
+
 /// Функция, которая заменяет все вхождения sub и str на replace.
 /// \param str - строка исходник
 /// \param sub - часть строки которую будем заменять
@@ -300,6 +302,8 @@ t_list *mx_sort_list(t_list *lst, bool (*cmp)(void *, void *));
 // not requested?
 
 //additional functions: 7
+bool mx_isnum(const char *s);
+int mx_atoi(const char *str);
 bool mx_isspace(char c); // +
 bool mx_isdigit(char c); // +
 bool mx_isalpha(int c); // +

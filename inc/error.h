@@ -12,7 +12,7 @@ typedef enum e_error {
     ERROR_DUPLICATE_PATHS,
     ERROR_OUT_OF_INT_MAX,
     ERROR_MEMORY_ALLOC,
-    ERROR_SEGMENTATION_FAULT
+    ERROR_SEG_FAULT
 } t_error;
 
 /// A function that stops application and throws error message to the standard error output.

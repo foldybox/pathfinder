@@ -4,7 +4,7 @@
 
 t_app *app_init() {
     t_app *app = malloc(sizeof(t_app));
-    if(app == NULL) error_throw(ERROR_MEMORY_ALLOC, "");
+    if(app == NULL) error_throw(ERROR_MEMORY_ALLOC, "app_init");
 
     app->file_path = NULL;
     app->vertices = NULL;
@@ -15,15 +15,14 @@ t_app *app_init() {
 }
 
 void app_free(t_app *app) {
-    if(app == NULL) error_throw(ERROR_SEGMENTATION_FAULT, "");
+    if(app == NULL) error_throw(ERROR_SEG_FAULT, "app_free");
 
-    if(app->file_path != NULL) {
-        free(app->file_path);
-        app->file_path = NULL;
-    }
+    // if(app->file_path != NULL) {
+    //     free(app->file_path);
+    //     app->file_path = NULL;
+    // }
     if(app->vertices != NULL) {
-        free(app->vertices);
-        app->vertices = NULL;
+    //    mx_del_strarr(&app->vertices); !!!
     }
     if(app->edges != NULL) {
         free(app->edges);

@@ -3,15 +3,14 @@
 #include "pathfinder.h"
 
 int main(int argc, char **argv) {
-    t_app *app = app_init(); // init global app variables
+    t_app *app = app_init();
 
-    mx_printstr("Good morning, lovely!\n");
+    arguments_handler(app, argc, argv);
+    file_read(app);
+    file_parse(app);
+    pathfinder(app);
+    print_paths(app);
 
-    arguments_handler(app, argc, argv); // handle args errors and set $file_path variable
-    read_file(app); // read file, handle errors and fill up $vertices and $edges arrays
-    pathfinder(app); // find all paths and write it into $paths array
-    print_paths(app); // print each path
-
-    app_free(app); // free up memory
+    app_free(app);
     return 0;
 }
