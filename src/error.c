@@ -34,7 +34,7 @@ void error_throw(t_error error, char *arg) {
             mx_printerr(" is not valid\n");
         } break;
 
-        case ERROR_INVALID_POINTS_NUMBER: {
+        case ERROR_INVALID_VERTICES_NUMBER: {
             mx_printerr("error: invalid number of islands\n");
         } break;
 

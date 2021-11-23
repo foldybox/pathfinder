@@ -1,4 +1,4 @@
-// arguments_handler.c
+// arguments.c
 
 #include "pathfinder.h"
 

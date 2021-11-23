@@ -9,17 +9,19 @@
 #include <stdint.h>
 
 #ifdef __APPLE__
-#include <malloc/malloc.h>
+    #include <malloc/malloc.h>
 #elif __linux__
-#include <malloc.h>
+
+    #include <malloc.h>
+
 #endif
 
 #ifndef INT_MAX
-#define INT_MAX 2147483647
+    #define INT_MAX 2147483647
 #endif
 
 #ifndef INT_MIN
-#define INT_MIN -2147483648
+    #define INT_MIN -2147483648
 #endif
 
 // UTILS PACK

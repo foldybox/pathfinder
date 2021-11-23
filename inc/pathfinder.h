@@ -2,11 +2,16 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
+// Uncomment to switch to Debug mode
+//#define _DEBUG_
+
 #include <stdlib.h>
 #include "libmx.h"
 #include "error.h"
 
-#define _DEBUG_
+#ifdef _DEBUG_
+    #include <stdio.h>
+#endif
 
 typedef struct s_edge {
     int from;
@@ -18,8 +23,10 @@ typedef struct s_path {
     int from;
     int to;
     int length;
-    t_list *vertices;
-    t_list *lengths;
+    int vertices_count;
+    int lengths_count;
+    int *vertices;
+    int *lengths;
 } t_path;
 
 typedef struct s_app {
@@ -29,7 +36,7 @@ typedef struct s_app {
     int edges_count;
     char **vertices;
     t_edge *edges;
-    t_path *paths;
+    t_list *paths;
 } t_app;
 
 
@@ -63,19 +70,19 @@ void file_parse(t_app *app);
 /// \return True if parse was success and False if not
 bool file_line_parse(const char *line, char **from, char **to, char **length);
 
-/// A function that validate file line, checks for errors and returns boolean.
+/// A function that validate splited file data, checks for errors and returns boolean.
 /// \param **from pointer to 'from' string
 /// \param **to pointer to 'to' string
 /// \param **length pointer to 'length' string
 /// \return True if validate was success and False if not
-bool file_line_validate(char **from, char **to, char **length);
+bool file_data_validate(char **from, char **to, char **length);
 
 /// A function that finds all shortest paths and fills up them into 'paths' global array.
 /// \param *app pointer to global application variable
-void pathfinder(t_app *app);
+void paths_find(t_app *app);
 
 /// A function that prints each path from 'paths' global array to standard output.
 /// \param *app pointer to global application variable
-void print_paths(t_app *app);
+void paths_print(t_app *app);
 
 #endif // !PATHFINDER_H

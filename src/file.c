@@ -1,4 +1,4 @@
-// read_file.c
+// file.c
 
 #include "pathfinder.h"
 
@@ -14,17 +14,13 @@ void file_read(t_app *app) {
 
     // check if file does not exist
     if(app->file_text == NULL) error_throw(ERROR_FILE_NOT_EXIST, app->file_path);
+
     // check if file is empty
     if(mx_strlen(app->file_text) == 0) error_throw(ERROR_EMPTY_FILE, app->file_path);
-
-    // #ifdef _DEBUG_
-    //     mx_printstr("File content:\n");
-    //     mx_printstr(app->file_text);
-    //     mx_printchar('\n');
-    // #endif
 }
 
 void file_parse(t_app *app) {
+    int temp_vertices_count = 0;
     // split file text by \n into 2d array
     char **file_splited = mx_strsplit(app->file_text, '\n');
 
@@ -38,6 +34,7 @@ void file_parse(t_app *app) {
         app->edges_count++;
     app->edges_count--;
 
+    // check if vertices count is invalid
     if(app->vertices_count < 0) error_throw(ERROR_INVALID_LINE, "1");
 
     #ifdef _DEBUG_
@@ -57,12 +54,7 @@ void file_parse(t_app *app) {
     if(app->edges == NULL) error_throw(ERROR_MEMORY_ALLOC, "file_parse:edges");
     mx_memset(app->edges, 0, app->edges_count * sizeof(t_edge));
 
-/*
-    1. Split line to strings: vertice0, vertice1, length.
-    2. Check if vertices exist in the array and save them and their indexes.
-    3. Set indexes and length in the edge struct.
-*/
-
+    // go through all lines
     for(int i = 1; i < app->edges_count + 1; i++) {
         char *from = NULL;
         char *to = NULL;
@@ -71,35 +63,41 @@ void file_parse(t_app *app) {
         int to_index = -1;
         int len = -1;
 
+        // parse line to temporary variables
         if(!file_line_parse(file_splited[i], &from, &to, &length)) error_throw(ERROR_INVALID_LINE, mx_itoa(i + 1));
-        if(!file_line_validate(&from, &to, &length)) error_throw(ERROR_INVALID_LINE, mx_itoa(i + 1));
+        // validate temporary variables
+        if(!file_data_validate(&from, &to, &length)) error_throw(ERROR_INVALID_LINE, mx_itoa(i + 1));
 
-        for (int j = 0; j < app->vertices_count; j++) {
-            if(app->vertices[j] == 0) {
-                from_index = j;
-                app->vertices[j] = mx_strdup(from);
+        // check and add a vertices to global array from temporary variables and set their indexes
+        for (int i = 0; i < app->vertices_count; i++) {
+            if(app->vertices[i] == 0) {
+                from_index = i;
+                app->vertices[i] = mx_strdup(from);
+                temp_vertices_count++;
                 break;
             }
-            if(!mx_strcmp(from, app->vertices[j])) {
-                from_index = j;
+            if(!mx_strcmp(from, app->vertices[i])) {
+                from_index = i;
+                break;
+            }
+        }
+        for (int i = 0; i < app->vertices_count; i++) {
+            if(app->vertices[i] == 0) {
+                to_index = i;
+                app->vertices[i] = mx_strdup(to);
+                temp_vertices_count++;
+                break;
+            }
+            if(!mx_strcmp(to, app->vertices[i])) {
+                to_index = i;
                 break;
             }
         }
 
-        for (int j = 0; j < app->vertices_count; j++) {
-            if(app->vertices[j] == 0) {
-                to_index = j;
-                app->vertices[j] = mx_strdup(to);
-                break;
-            }
-            if(!mx_strcmp(to, app->vertices[j])) {
-                to_index = j;
-                break;
-            }
-        }
-
+        // convert length from string to int
         len = mx_atoi(length);
 
+        // check if exist copies of vertices in global array
         for (int i = 0; i < app->edges_count; i++) {
             if((from_index == app->edges[i].from && to_index == app->edges[i].to) ||
                (to_index == app->edges[i].from && from_index == app->edges[i].to)) {
@@ -107,14 +105,31 @@ void file_parse(t_app *app) {
             }
         }
 
+        // set parameters of current edge
         app->edges[i - 1].from = from_index;
         app->edges[i - 1].to = to_index;
         app->edges[i - 1].length = len;
 
+        // free allocated memory
         free(from);
         free(to);
         free(length);
     }
+
+    // check if invalid count of vertices in global array
+    if(app->vertices_count != temp_vertices_count) error_throw(ERROR_INVALID_VERTICES_NUMBER, "");
+    for(int i = 0; i < app->edges_count; i++) {
+        if((app->edges[i].from < 0) || (app->edges[i].to < 0)) {
+            error_throw(ERROR_INVALID_VERTICES_NUMBER, "");
+        }
+    }
+
+    // check if length of all edges is too big
+    unsigned int length_sum = 0;
+    for(int i = 0; i < app->edges_count; i++) {
+        length_sum += app->edges[i].length;
+    }
+    if(length_sum > INT_MAX) error_throw(ERROR_OUT_OF_INT_MAX, "");
 
     #ifdef _DEBUG_
         mx_printstr("\nVertices list:\n");
@@ -128,32 +143,38 @@ void file_parse(t_app *app) {
         mx_printstr("\nEdges list:\n");
         for (int i = 0; i < app->edges_count; i++) {
             mx_printstr("[");
-            mx_printint(app->edges[i].from);
-            mx_printstr("-");
-            mx_printint(app->edges[i].to);
-            mx_printstr("] => ");
+            mx_printstr(app->vertices[app->edges[i].from]);
+            mx_printstr(" -> ");
+            mx_printstr(app->vertices[app->edges[i].to]);
+            mx_printstr("] = ");
             mx_printint(app->edges[i].length);
             mx_printchar('\n');
         }
     #endif
 
+    // free allocated memory
     free(file_splited);
 }
 
 bool file_line_parse(const char *line, char **from, char **to, char **length) {
+    // find first delimiter
     int hyphen_index = mx_get_char_index(line, '-');
     if(hyphen_index <= 0) return false;
-
+    
+    // set first vertice name
     *from = mx_strndup(line, hyphen_index);
     if(*from == NULL) error_throw(ERROR_MEMORY_ALLOC, "file_line_parse:from");
 
+    // find second delimiter
     line += hyphen_index + 1;
     int comma_index = mx_get_char_index(line, ',');
     if(comma_index <= 0) return false;
 
+    // set second vertice name
     *to = mx_strndup(line, comma_index);
     if(*to == NULL) error_throw(ERROR_MEMORY_ALLOC, "file_line_parse:to");
 
+    // set lenght string
     line += comma_index + 1;
     *length = mx_strdup(line);
     if(*length == NULL) error_throw(ERROR_MEMORY_ALLOC, "file_line_parse:length");
@@ -162,17 +183,19 @@ bool file_line_parse(const char *line, char **from, char **to, char **length) {
     return true;
 }
 
-bool file_line_validate(char **from, char **to, char **length) {
+bool file_data_validate(char **from, char **to, char **length) {
+    // check if vertices name is invalid
     for(int i = 0; i < mx_strlen(*from); i++) {
         if(!(mx_isalpha(from[0][i]) || mx_isdigit(from[0][i]))) return false;
     }
-
     for(int i = 0; i < mx_strlen(*to); i++) {
         if(!(mx_isalpha(to[0][i]) || mx_isdigit(to[0][i]))) return false;
     }
 
+    // check if vertices name is equal
     if(!mx_strcmp(*from, *to)) return false;
 
+    // check if length string in invalid
     for(int i = 0; i < mx_strlen(*length); i++) {
         if( !mx_isdigit(length[0][i]) ) return false;
     }
