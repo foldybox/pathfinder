@@ -3,6 +3,8 @@
 #include "pathfinder.h"
 
 void file_read(t_app *app) {
+    if(app == NULL) error_throw(ERROR_SEG_FAULT, "arguments_handler");
+
     #ifdef _DEBUG_
         mx_printstr("File path: ");
         mx_printstr(app->file_path);
@@ -21,6 +23,7 @@ void file_read(t_app *app) {
 
 void file_parse(t_app *app) {
     int temp_vertices_count = 0;
+
     // split file text by \n into 2d array
     char **file_splited = mx_strsplit(app->file_text, '\n');
 
@@ -153,7 +156,11 @@ void file_parse(t_app *app) {
     #endif
 
     // free allocated memory
+    for (int i = 0; i < app->edges_count + 3; i++) {
+        free(file_splited[i]);
+    }
     free(file_splited);
+    file_splited = NULL;
 }
 
 bool file_line_parse(const char *line, char **from, char **to, char **length) {

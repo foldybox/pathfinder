@@ -13,12 +13,14 @@
     #include <stdio.h>
 #endif
 
+/// Edge structure
 typedef struct s_edge {
     int from;
     int to;
     int length;
 } t_edge;
 
+/// Path structure
 typedef struct s_path {
     int from;
     int to;
@@ -29,6 +31,8 @@ typedef struct s_path {
     int *lengths;
 } t_path;
 
+
+/// Global application structure that contains global variables and arrays
 typedef struct s_app {
     char *file_path;
     char *file_text;
