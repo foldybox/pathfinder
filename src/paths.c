@@ -2,7 +2,7 @@
 
 #include "pathfinder.h"
 
-#define MAX_BUF 16
+#define MAX_BUF 256
 
 void paths_find(t_app *app) {
     int *vertices_weights = NULL;
@@ -119,24 +119,38 @@ void paths_find(t_app *app) {
             for (int k = 0; k < MAX_BUF; k++) {
                 if(vertices_prev[i][k] != -1) count++;
             }
-            mult *= count;
-
             int m = 0;
             for (int k = 0; k < MAX_BUF; k++) {
                 vertices_prev_table[i][k] = vertices_prev[i][m];
-                m++;
-                if(m % mult == 0) m = 0;
+                if((k + 1) % mult == 0) m++;
+                if(m % count == 0) m = 0;
             }
+            mult *= count;
         }
 
+        #ifdef _DEBUG_
+            printf("\nVertices prev table for %s:\n", app->vertices[global_active_vertice]);
+            for (int i = 0; i < app->vertices_count; i++) {
+                printf("%s:", app->vertices[i]);
+                for (int j = 0; j < mult; j++) {
+                    if(vertices_prev_table[i][j] < 0) printf("\tr");
+                    else printf("\t%s", app->vertices[vertices_prev_table[i][j]]);
+                }
+                printf("\n");
+            }
+        #endif
+        
         // add new path into global array
-        for(int i = 0; i < app->vertices_count; i++) {
-            for(int m = mult - 1; m >= 0; m--) {
-                if(global_active_vertice == i) break;
+        for(int index = 0; index < app->vertices_count; index++) {
+            t_list *paths = NULL;
+
+            //for(int m = mult - 1; m >= 0; m--) {
+            for(int m = 0; m < mult; m++) {
+                if(global_active_vertice == index) break;
 
                 t_path *path = malloc(sizeof(t_path));
                 path->from = global_active_vertice;
-                path->to = i;
+                path->to = index;
                 path->length = 0;
                 path->vertices_count = 0;
 
@@ -173,23 +187,59 @@ void paths_find(t_app *app) {
 
                 // add new path to global paths array
                 if(app->paths == NULL) {
-                    app->paths = mx_create_node(path);
+                    paths = mx_create_node(path);
                 }
                 else {
                     // check all global array for existing current path
                     bool is_exist = false;
-                    for(t_list *node = app->paths; node != NULL; node = node->next) {
-                        t_path *active = (t_path *)node->data;
+                    for(t_list *node_local = paths; node_local != NULL; node_local = node_local->next) {
+                        t_path *active_local = (t_path *)node_local->data;
                         bool is_front = false, is_bottom = false, is_vertices = true, is_empty_vertices = true;
 
-                        if((path->from == active->from && path->to == active->to)) is_front = true;
-                        if((path->to == active->from && path->from == active->to)) is_bottom = true;
+                        if((path->from == active_local->from && path->to == active_local->to)) is_front = true;
+                        if((path->to == active_local->from && path->from == active_local->to)) is_bottom = true;
 
                         if(path->vertices_count != 0) {
                             is_empty_vertices = false;
-                            if(path->vertices_count != active->vertices_count) {
+                            if(path->vertices_count == active_local->vertices_count) {
                                 for (int i = 0; i < path->vertices_count; i++) {
-                                    if(path->vertices[i] != active->vertices[i]) {
+                                    if(path->vertices[i] != active_local->vertices[i]) {
+                                        is_vertices = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            else {
+                                is_vertices = false;
+                            }
+                        }
+
+                        if(is_empty_vertices && (is_front || is_bottom)) {
+                            is_exist = true;
+                            break;
+                        }
+                        else if(is_vertices && (is_front || is_bottom)) {
+                            is_exist = true;
+                            break;
+                        }
+                        else if(is_bottom) {
+                            is_exist = true;
+                            break;
+                        }
+                    }
+
+                    for(t_list *node_global = app->paths; node_global != NULL; node_global = node_global->next) {
+                        t_path *active_global = (t_path *)node_global->data;
+                        bool is_front = false, is_bottom = false, is_vertices = true, is_empty_vertices = true;
+
+                        if((path->from == active_global->from && path->to == active_global->to)) is_front = true;
+                        if((path->to == active_global->from && path->from == active_global->to)) is_bottom = true;
+
+                        if(path->vertices_count != 0) {
+                            is_empty_vertices = false;
+                            if(path->vertices_count == active_global->vertices_count) {
+                                for (int i = 0; i < path->vertices_count; i++) {
+                                    if(path->vertices[i] != active_global->vertices[i]) {
                                         is_vertices = false;
                                         break;
                                     }
@@ -215,9 +265,32 @@ void paths_find(t_app *app) {
                     }
 
                     // if path is not exist in the global array add vertice into it.
-                    if(!is_exist) mx_push_back(&app->paths, path);
+                    if(!is_exist) mx_push_back(&paths, path);
                 }
             }
+
+            // === Этот говнокод подгоняет сортировку под якобы "верную" из трейса. Если нужна нормальная работа программы, а не как у примера, то обязательно удалить!
+            mx_sort_list(paths, paths_list_cmp);
+            // ===
+
+            for(t_list *node = paths; node != NULL; node = node->next) {
+                t_path *path = (t_path *)node->data;
+                if(app->paths == NULL)
+                    app->paths = mx_create_node(path);
+                else
+                    mx_push_back(&app->paths, path);
+            }
+
+            if(paths != NULL) {
+                t_list *node = paths;
+                while (node != NULL) {
+                    t_list *n = node->next;
+                    free(node);
+                    node = n;
+                }
+                paths = NULL;
+            }
+
         }
 
         for(int i = 0; i < app->vertices_count; i++) {
@@ -270,4 +343,40 @@ void paths_print(t_app *app) {
 
         mx_printstr("========================================\n");
     }
+}
+
+bool paths_list_cmp(void *a, void *b) {
+    t_path *path_a = (t_path *) a;
+    t_path *path_b = (t_path *) b;
+    int *vertices_a = malloc((path_a->vertices_count + 1) * sizeof(int));
+    int *vertices_b = malloc((path_b->vertices_count + 1) * sizeof(int));
+    int size = 0;
+
+    for(int i = 0; i < path_a->vertices_count; i++) {
+        vertices_a[i] = path_a->vertices[i];
+    }
+    vertices_a[path_a->vertices_count] = path_a->to;
+
+    for(int i = 0; i < path_b->vertices_count; i++) {
+        vertices_b[i] = path_b->vertices[i];
+    }
+    vertices_b[path_b->vertices_count] = path_b->to;
+
+    if(path_a->vertices_count > path_b->vertices_count)
+        size = path_b->vertices_count + 1;
+    else size = path_a->vertices_count + 1;
+
+    for (int i = 0; i < size; i++) {
+        if(vertices_a[i] > vertices_b[i]) {
+            free(vertices_a);
+            free(vertices_b);
+            return true;
+        }
+        else if(vertices_a[i] < vertices_b[i])
+            break;
+    }
+    
+    free(vertices_a);
+    free(vertices_b);
+    return false;
 }

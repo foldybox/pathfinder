@@ -89,4 +89,6 @@ void paths_find(t_app *app);
 /// \param *app pointer to global application variable
 void paths_print(t_app *app);
 
+bool paths_list_cmp(void *a, void *b);
+
 #endif // !PATHFINDER_H

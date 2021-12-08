@@ -4,5 +4,5 @@
 
 void mx_printchar(char c){
     char *buff = &c;
-    write(1, buff, 1);
+    write(STDOUT_FILENO, buff, 1);
 }

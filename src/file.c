@@ -156,11 +156,14 @@ void file_parse(t_app *app) {
     #endif
 
     // free allocated memory
-    for (int i = 0; i < app->edges_count + 3; i++) {
-        free(file_splited[i]);
+    if(file_splited != NULL) {
+        for (int i = 0; i < app->edges_count + 1; i++) {
+            if(file_splited[i] != NULL)
+                free(file_splited[i]);
+        }
+        free(file_splited);
+        file_splited = NULL;
     }
-    free(file_splited);
-    file_splited = NULL;
 }
 
 bool file_line_parse(const char *line, char **from, char **to, char **length) {
